@@ -9,6 +9,12 @@ interface FeedbackType {
   score: number;
   strengths: string[];
   improvements: string[];
+  resumeSuggestions: string[];
+  careerDevelopment: {
+    projectIdeas: string[];
+    techStack: string[];
+    learningPath: string[];
+  };
 }
 
 const declaration: FunctionDeclaration = {
@@ -16,6 +22,7 @@ const declaration: FunctionDeclaration = {
   description: "Displays interview feedback with detailed analysis",
   parameters: {
     type: SchemaType.OBJECT,
+    required: ["text", "score", "strengths", "improvements", "resumeSuggestions", "careerDevelopment"],
     properties: {
       text: {
         type: SchemaType.STRING,
@@ -35,8 +42,33 @@ const declaration: FunctionDeclaration = {
         items: { type: SchemaType.STRING },
         description: "Areas for improvement",
       },
+      resumeSuggestions: {
+        type: SchemaType.ARRAY,
+        items: { type: SchemaType.STRING },
+        description: "Suggestions to improve resume",
+      },
+      careerDevelopment: {
+        type: SchemaType.OBJECT,
+        properties: {
+          projectIdeas: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
+            description: "Suggested projects to build",
+          },
+          techStack: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
+            description: "Recommended technologies to learn",
+          },
+          learningPath: {
+            type: SchemaType.ARRAY,
+            items: { type: SchemaType.STRING },
+            description: "Step-by-step learning path",
+          },
+        },
+        required: ["projectIdeas", "techStack", "learningPath"],
+      },
     },
-    required: ["text", "score", "strengths", "improvements"],
   },
 };
 
@@ -104,11 +136,25 @@ ${resumeText}
 
 FEEDBACK GENERATION:
 Evaluate the candidate holistically across the following categories:
-1. Technical knowledge (40%)
+1. Technical knowledge (30%)
 2. Problem-solving skills (20%)
-3. Project understanding (20%)
+3. Project understanding (15%)
 4. Personal values and mindset (10%)
-5. Communication skills (10%)`,
+5. Communication skills (10%)
+6. Resume quality (15%)
+
+Also provide:
+1. Resume Optimization:
+   - Structure and formatting suggestions
+   - Content improvements
+   - Keywords and highlighting achievements
+   
+2. Career Development Plan:
+   - Suggested projects aligned with market demands
+   - Recommended tech stack based on career goals
+   - Structured learning path with resources
+   
+   DONT SPEAK ANYTHING AFTER GENERATING FEEDBACK (no need of explaining the feedback i mean)`,
           },
         ],
       },
@@ -173,8 +219,10 @@ Evaluate the candidate holistically across the following categories:
 
       {feedback && (
         <div className="bg-white rounded-lg shadow-lg p-6">
-          <h2 className="text-2xl font-bold mb-6">Interview Feedback</h2>
-          <div className="mb-6">
+          <h2 className="text-2xl font-bold mb-6">Comprehensive Feedback</h2>
+          
+          {/* Score Section */}
+          <div className="mb-8">
             <div className="flex items-center justify-between">
               <span className="text-gray-700">Overall Score</span>
               <span className="text-lg font-medium">{feedback.score}/100</span>
@@ -187,14 +235,16 @@ Evaluate the candidate holistically across the following categories:
             </div>
           </div>
 
-          <div className="prose max-w-none">
+          {/* Interview Feedback */}
+          <div className="prose max-w-none mb-8">
+            <h3 className="text-xl font-semibold mb-4">Interview Performance</h3>
             <p className="text-gray-700 mb-6">{feedback.text}</p>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
               <div>
-                <h3 className="text-lg font-medium text-green-700 mb-3">
+                <h4 className="text-lg font-medium text-green-700 mb-3">
                   Key Strengths
-                </h3>
+                </h4>
                 <ul className="list-disc pl-5 space-y-2">
                   {feedback.strengths.map((strength, idx) => (
                     <li key={idx} className="text-gray-700">
@@ -205,9 +255,9 @@ Evaluate the candidate holistically across the following categories:
               </div>
 
               <div>
-                <h3 className="text-lg font-medium text-orange-700 mb-3">
+                <h4 className="text-lg font-medium text-orange-700 mb-3">
                   Areas for Improvement
-                </h3>
+                </h4>
                 <ul className="list-disc pl-5 space-y-2">
                   {feedback.improvements.map((improvement, idx) => (
                     <li key={idx} className="text-gray-700">
@@ -217,9 +267,76 @@ Evaluate the candidate holistically across the following categories:
                 </ul>
               </div>
             </div>
+
+            {/* Resume Optimization */}
+            <div className="mb-8">
+              <h3 className="text-xl font-semibold mb-4">Resume Optimization</h3>
+              <ul className="list-disc pl-5 space-y-2">
+                {feedback.resumeSuggestions.map((suggestion, idx) => (
+                  <li key={idx} className="text-gray-700">
+                    {suggestion}
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Career Development */}
+            <div>
+              <h3 className="text-xl font-semibold mb-4">Career Development Plan</h3>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div>
+                  <h4 className="text-lg font-medium text-blue-700 mb-3">
+                    Recommended Projects
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {feedback.careerDevelopment.projectIdeas.map((project, idx) => (
+                      <li key={idx} className="text-gray-700">
+                        {project}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-medium text-purple-700 mb-3">
+                    Tech Stack to Learn
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {feedback.careerDevelopment.techStack.map((tech, idx) => (
+                      <li key={idx} className="text-gray-700">
+                        {tech}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="text-lg font-medium text-indigo-700 mb-3">
+                    Learning Path
+                  </h4>
+                  <ul className="list-disc pl-5 space-y-2">
+                    {feedback.careerDevelopment.learningPath.map((step, idx) => (
+                      <li key={idx} className="text-gray-700">
+                        {step}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       )}
+
+      <div className="mt-6 text-center">
+        <button
+          onClick={handleDisconnect}
+          className="px-4 py-2 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 transition-colors"
+        >
+          End Session
+        </button>
+      </div>
     </div>
   );
 }

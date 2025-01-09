@@ -42,37 +42,54 @@ export class AudioStreamer {
     this.addPCM16 = this.addPCM16.bind(this);
   }
 
-  async addWorklet<T extends (d: any) => void>(
-    workletName: string,
-    workletSrc: string,
-    handler: T,
-  ): Promise<this> {
-    let workletsRecord = registeredWorklets.get(this.context);
-    if (workletsRecord && workletsRecord[workletName]) {
-      // the worklet already exists on this context
-      // add the new handler to it
-      workletsRecord[workletName].handlers.push(handler);
-      return Promise.resolve(this);
-      //throw new Error(`Worklet ${workletName} already exists on context`);
+ async addWorklet<T extends (d: any) => void>(
+  workletName: string,
+  workletSrc: string,
+  handler: T,
+): Promise<this> {
+  try {
+    // Ensure audio context is running
+    if (this.context.state === 'suspended') {
+      await this.context.resume();
     }
 
+    let workletsRecord = registeredWorklets.get(this.context);
+    
+    // Check for existing worklet
+    if (workletsRecord && workletsRecord[workletName]) {
+      workletsRecord[workletName].handlers.push(handler);
+      return this;
+    }
+
+    // Initialize worklets record if needed
     if (!workletsRecord) {
       registeredWorklets.set(this.context, {});
       workletsRecord = registeredWorklets.get(this.context)!;
     }
 
-    // create new record to fill in as becomes available
+    // Create new worklet record
     workletsRecord[workletName] = { handlers: [handler] };
 
+    // Create and add the worklet
     const src = createWorketFromSrc(workletName, workletSrc);
-    await this.context.audioWorklet.addModule(src);
-    const worklet = new AudioWorkletNode(this.context, workletName);
+    await this.context.audioWorklet.addModule(src).catch(error => {
+      console.error('Error adding audio worklet module:', error);
+      throw error;
+    });
 
-    //add the node into the map
+    // Create and configure the worklet node
+    const worklet = new AudioWorkletNode(this.context, workletName);
     workletsRecord[workletName].node = worklet;
 
+    // Clean up the blob URL
+    URL.revokeObjectURL(src);
+
     return this;
+  } catch (error) {
+    console.error('Error in addWorklet:', error);
+    throw error;
   }
+}
 
   addPCM16(chunk: Uint8Array) {
     const float32Array = new Float32Array(chunk.length / 2);
